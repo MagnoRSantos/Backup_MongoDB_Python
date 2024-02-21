@@ -63,6 +63,8 @@ logfile = os.path.join(dirlogfile, f"log_backup_{datahoraLog}.txt")
 dirqueryfile = os.path.join(dirapp, "query")
 queryfile = os.path.join(dirqueryfile, "query.js")
 
+dirsastoken = os.path.join(dirapp, "sastoken")
+sastokenfile = os.path.join(dirsastoken, "sastoken.txt")
 
 ##cria os diretórios se não existirem
 if not os.path.exists(dirlogfile):
@@ -71,6 +73,8 @@ if not os.path.exists(dirlogfile):
 if not os.path.exists(dirqueryfile):
     os.makedirs(dirqueryfile)
 
+if not os.path.exists(dirsastoken):
+    os.makedirs(dirsastoken)
 
 ## trecho de geração do log
 logging.basicConfig(
@@ -96,6 +100,20 @@ def geraSasToken(v_account_name, v_account_key, v_container_name):
     )
 
     return sas_token
+
+## grava o sastoken em arquivo txt
+def gravaSasToken():
+    sas = str(geraSasToken(str_account_name, str_account_key, str_container_name))
+    with io.open(sastokenfile, 'w', encoding='utf-8') as f:
+        f.write(str(sas))
+
+
+## lê o sastoken do arquivo txt
+def lerSasToken():
+    with io.open(sastokenfile, 'r', encoding='utf-8') as f:
+        v_sastoken = f.read()
+
+    return v_sastoken
 
 
 ## obtem timestamp   
@@ -167,7 +185,9 @@ def databaseMongodb():
 ## funcao de backup de todos os databases
 def BackupAllDbs():
 
-    sas = str(geraSasToken(str_account_name, str_account_key, str_container_name))
+    #sas = str(geraSasToken(str_account_name, str_account_key, str_container_name))
+    gravaSasToken()
+    sas = str(lerSasToken())
     v_localbkp = os.path.join(BKP_DIR, BKP_NAME)
     v_localbkp = f"{v_localbkp}_FULL"
     cmdMongodump = f"sudo mongodump -u {DBUSERNAME} -p {DBPASSWORD} --host {MONGO_HOST} --port {MONGO_PORT} --numParallelCollections 8 --authenticationDatabase {DBAUTHDB} --readPreference=secondary --oplog --out {v_localbkp} --gzip"
@@ -200,7 +220,9 @@ def BackupAllDbs():
 ## funcao de backup de databases especificos
 def BackupEspecificDbs(p_listdbs):
 
-    sas = str(geraSasToken(str_account_name, str_account_key, str_container_name))
+    #sas = str(geraSasToken(str_account_name, str_account_key, str_container_name))
+    gravaSasToken()
+    sas = str(lerSasToken())
     dbsmongo = databaseMongodb()
     #print(dbsmongo[1:-1])
     #print(p_listdbs)
